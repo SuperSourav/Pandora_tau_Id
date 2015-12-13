@@ -26,7 +26,7 @@ from math import *
 
 # make list of files..
 import glob
-files=glob.glob("/users/kotwal/fullSim/fullsim/output/tev1mm_pythia6_zprime1tev_tautau_0001_pandora.slcio")
+files=glob.glob("/users/kotwal/fullSim/fullsim/output/tev1mm_pythia6_zprime1tev_tautau_00*")#01_pandora.slcio")
 factory = LCFactory.getInstance()
 reader = factory.createLCReader()
 reader.open(files)
@@ -205,15 +205,7 @@ hNiso_trackT=H1D("Niso_track_truth", 20, 0, 10)
 hMaxDeltaR=H1D("MaxDeltaR", 50, 0, 0.2)
 hMaxDeltaRT=H1D("MaxDeltaR_truth", 50, 0, 0.2)
 hMtrack=H1D("Mtrack", 50, 0, 2.5)#10)
-hMtrackT=H1D("Mtrack_truth", 50, 0, 10)
-hpT=H1D("pT", 100, 0, 200)
-hpT_uncut=H1D("pT_uncut", 100, 0, 200)
-hnjettracks=H1D("no. of tracks/jet after cut", 20, 0, 10)
-hnjettracks_uncut=H1D("no. of tracks/jet without cut", 20, 0, 10)
-hneventtracks=H1D("no. of tracks/event after cut", 100, 0, 50)
-hneventtracks_uncut=H1D("no. of tracks/event without cut", 100, 0, 50)
-hjetpT=H1D("pT of jets in the event after cut", 100, 0, 200)
-hjetpT_uncut=H1D("pT of jets in the event without cut", 100, 0, 200)
+hMtrackT=H1D("Mtrack_truth", 50, 0, 2.5)#10)
 hleptaud=H1D("cosine angle of recon. jet from had dking tau direction", 50, -1, 1.01)
 # h1.doc()  # look at API
 
@@ -223,16 +215,11 @@ hleptaud=H1D("cosine angle of recon. jet from had dking tau direction", 50, -1, 
 from hep.physics.jet import DurhamJetFinder,FixNumberOfJetsFinder
 fjet=FixNumberOfJetsFinder(2) # request 2 jets. The Jade algorithm at work 
 #fjet=DurhamJetFinder(0.05) 
-core=0.1 #(size of the core of a jet)
+core=0.2 #(size of the core of a jet)
 pl = 0
 nEvent=0
-neventtracks=0
-neventtracks_uncut=0
 TRACK_PT_CUT = 15.0 #hardest track in a jet candidate should be more than 15 GeV to be considered
-lepdk_taueventcount = 0
-taulepinivis1 = 0
 iter1 = 0
-finalchargedpion=0
 taunum=0
 lepdk = 0
 hadk=0
@@ -241,9 +228,11 @@ one_lep=0
 taucount=0
 onegamma=0
 N = input("enter the number of prong(s): ") #no of prong(s) decay
+mctau3p = 0
 tau3p = 0
 jetcount=0
 realjetcount=0
+mctau1p = 0
 tau1p = 0
 while(1):
      evt=reader.readNextEvent()
@@ -251,7 +240,6 @@ while(1):
 #     print nEvent ,"ends"
      nEvent=nEvent+1
 #     if (nEvent==2): break #print 
-     print "# Event: ",nEvent
      strVec = evt.getCollectionNames()
      if nEvent == 1:
             for col in  strVec:
@@ -261,17 +249,11 @@ while(1):
      col1 = evt.getCollection("MCParticle")
      nMC = col1.getNumberOfElements()
      turthparticles=ArrayList()
-     print "nMC: ", nMC, evt
      for ss in range(nMC):
           par=col1.getElementAt(ss)
           pdg=par.getPDG()
           flaglep=False
           photorecoil=False
-        #  if(abs(pdg) == 2112):
-        #     parents=par.getParents()
-        #     print "neutron with %i parents:" %(len(parents))
-        #     for kk in range(len(parents)):
-        #        print parents[kk].getPDG(), "parent"
           if(abs(pdg) == 15):
              tau_d = par.getDaughters()
              l = len(tau_d)
@@ -284,73 +266,65 @@ while(1):
                        break # tau just emits photon
                     if ((abs(daughter)>=11) and (abs(daughter)<=14)):
                        flaglep=True #looking for lepton decay
-                       one_lep = one_lep + 1
                        tau_lepdk = tau_lepdk + 1
                        break      
                 if ((photorecoil==False)):
                    taucount=taucount+1
-                   print taucount, nEvent
-                   for xx in range(len(tau_d)):
-                      print tau_d[xx].getPDG()
-       #            else: print "D: ", daughter
                 if ((flaglep==False)and(photorecoil==False)):
-                  # taucount=taucount+1
-                 #  print taucount, nEvent
-#                   print par.getMomentum()[0], par.getMomentum()[1], par.getMomentum()[2]
                    leptau=LParticle('tauhad-dir')
                    leptau.setPxPyPz(par.getMomentum()[0], par.getMomentum()[1], par.getMomentum()[2])
                    truejet=[]
                    for aa in range(len(tau_d)):
                       daughtau=tau_d[aa]
                       if ((abs(daughtau.getPDG()))!=16):
-                         truejetmem=LParticle(str(daughtau.getPDG()))
-                         truejetmem.setPxPyPzE(daughtau.getMomentum()[0], daughtau.getMomentum()[1], daughtau.getMomentum()[2], daughtau.getEnergy())
-                         truejetmem.setCharge(daughtau.getCharge())
-                         truejet.append(truejetmem)
+                         if (((abs(daughtau.getPDG()))!=113) and ((abs(daughtau.getPDG()))!=213) and ((abs(daughtau.getPDG()))!=323) and ((abs(daughtau.getPDG()))!=313)):
+                            truejetmem=LParticle(str(daughtau.getPDG()))
+                            truejetmem.setPxPyPzE(daughtau.getMomentum()[0], daughtau.getMomentum()[1], daughtau.getMomentum()[2], daughtau.getEnergy())
+                            truejetmem.setCharge(daughtau.getCharge())
+                            truejet.append(truejetmem)
+                         else:
+                            for reso in daughtau.getDaughters():
+                               truejetmem=LParticle(str(reso.getPDG()))
+                               truejetmem.setPxPyPzE(reso.getMomentum()[0], reso.getMomentum()[1], reso.getMomentum()[2], reso.getEnergy())
+                               truejetmem.setCharge(reso.getCharge())
+                               truejet.append(truejetmem)
+                   if((prong(truejet)==1)): 
+                     mctau1p = mctau1p + 1
+                     #@#print "1p", mctau1p
+                   if((prong(truejet)==3)):
+                     mctau3p = mctau3p + 1
 #                   print leptau
-#!                   if ((PTCUT(truejet)) and (prong(truejet)==N)):
-#!                      FCENT_t = fcent(truejet, leptau)
-#!                      FTRACK_t = ftrack(truejet, leptau)
-#!                      RTRACK_t = Rtrack(truejet, leptau)
-#!                      NISO_t = Niso_track(truejet, leptau)
-#!                      MAXDELR_t = max_delR(truejet, leptau)
-#!                      MTRACK_t = mtrack(truejet, leptau)
-#!                      if (FCENT_t != "NAN"):
-#!                         hfcentT.fill(FCENT_t)
-#!                      if (FTRACK_t != "NAN"):
-#!                         hftrackT.fill(FTRACK_t)
-#!                      if (RTRACK_t != "NAN"):
-#!                         hRtrackT.fill(RTRACK_t)
-#!                      hNiso_trackT.fill(NISO_t)
-#!                      hMaxDeltaRT.fill(MAXDELR_t)
-#!                      hMtrackT.fill(MTRACK_t)
-#                if (flaglep):
-#                   tau_lepdk = tau_lepdk + 1
-#                   break
-#     print tau_lepdk
+                   if ((PTCUT(truejet)) and (prong(truejet)==N)):
+                      FCENT_t = fcent(truejet, leptau)
+                      FTRACK_t = ftrack(truejet, leptau)
+                      RTRACK_t = Rtrack(truejet, leptau)
+                      NISO_t = Niso_track(truejet, leptau)
+                      MAXDELR_t = max_delR(truejet, leptau)
+                      MTRACK_t = mtrack(truejet, leptau)
+                      if (FCENT_t != "NAN"):
+                         hfcentT.fill(FCENT_t)
+                      if (FTRACK_t != "NAN"):
+                         hftrackT.fill(FTRACK_t)
+                      if (RTRACK_t != "NAN"):
+                         hRtrackT.fill(RTRACK_t)
+                      hNiso_trackT.fill(NISO_t)
+                      hMaxDeltaRT.fill(MAXDELR_t)
+                      hMtrackT.fill(MTRACK_t)
      if (tau_lepdk==2):
         event_rej = event_rej + 1
         continue #skipping the event as both the taus dk leptonically
+     elif (tau_lepdk==1):
+        one_lep = one_lep + 1
+        realjetcount=realjetcount+1
      else:
         realjetcount=realjetcount+1
 #-----------------------------------------------------------------#
 
-
-
-
-
-
-
-
-
-
-#     print nEvent
      col = evt.getCollection("PandoraPFOCollection")
      nPFA = col.getNumberOfElements()
 
      particles=ArrayList() # list of particles
      particleCharge=[]  
-     #print "num: ", nPFA
      PDGlist = []
      for i in range(nPFA):
           njettracks=0
@@ -360,33 +334,19 @@ while(1):
           p4=pa.getMomentum()  
           ee=pa.getEnergy() 
           typep=pa.getType() # type of PF 
-        #  print typep
           PDGlist.append(typep)
           p=BasicHepLorentzVector(ee,p4[0],p4[1],p4[2])
           particles.add(p) # add particle to the list 
           particleCharge.append(charge)
-#          if (abs(typep) == 211):
-#             print p
-#          print "PID: ",typep, "\t", p, "\t", type(particles)
-     #print particles.size()
      if (particles.size()>1): # ask for >1 particles
        fjet.setEvent(particles)
-##       print "i:", particles
-##       print particleCharge
-      ## print "Jet - ", fjet
-       # print "Nr of jets=", fjet.njets()  
        alljets=[] # make a new list with jets 
 #       print "# of jets ", fjet.njets()
        for i in range(fjet.njets()):
-		 # print "Jet=",i," Nr if particles in jet =",fjet.nParticlesPerJet(i) 
          pjet=fjet.jet(i)   # make  HepLorentzVector
-###         print fjet.particlesInJet(i)
-###         print "jet", pjet
          ee=pjet.t()  # energy
          p3=pjet.v3() # 3-vector  
-         #print " ",ee,p3
          pl_uncut=LParticle(p3.x(),p3.y(),p3.z(),ee)
-         hjetpT_uncut.fill(pl_uncut.perp())
 #================MAW===========================================================
          JetIds = [] #storing the PID of particles in the jet
          JETset=[] #converting fjet into LParticle array
@@ -407,85 +367,40 @@ while(1):
             JETelement.setPxPyPzE(mom.x(), mom.y(), mom.z(), fjet.particlesInJet(i)[j].t())
             JETelement.setCharge(CHARGE)
             JETset.append(JETelement)
-         #1#print i, ": ", JetIds
          if ((len(JetIds) == 1) and (JetIds[0] == 22)):
             onegamma=onegamma+1
 #~~~~~~~~~~~~~~~~~~~~~~ PT CUT ON HARDEST TRACK IN A TAU JET CANDIDATE ~~~~~~~~
-#         pT_max = 0.0
-#         hard = 0
-#!         for ss in range(len(JETset)):
-#            if (pT_max < JETset[ss].perp()):
-#               pT_max = JETset[ss].perp()
-#               hard = ss
-#!            hpT_uncut.fill(JETset[ss].perp())
          pl=LParticle(p3.x(),p3.y(),p3.z(),ee) # convert to a class with convinient kinematic methods
-         if ((tau_lepdk!=0) and (COS(pl,leptau) < 0.98)): continue
+         if ((tau_lepdk!=0)): hleptaud.fill(COS(pl,leptau))
+         if ((tau_lepdk!=0) and (COS(pl,leptau) < 0.98)): continue #rejecting leptonicaly dkying tau
          else:jetcount=jetcount+1
          if (prong(JETset)==3):
             tau3p = tau3p + 1
          if (prong(JETset)==1):
             tau1p = tau1p + 1
          if ((PTCUT(JETset)) and (prong(JETset)==N)):
-            for b in range(len(JETset)):
-               hpT.fill(JETset[b].perp())
-               if (JETset[b].getCharge() != 0.0):
-                  njettracks=njettracks+1
-#            print "prong: ", njettracks
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-##         print fjet.particlesInJet(i)
-#         print fjet.nParticlesPerJet(i)
-##         print JETset 
-##         print JETset[0].getCharge(), "\t", JETset[1].getCharge()
-###            pl=LParticle(p3.x(),p3.y(),p3.z(),ee) # convert to a class with convinient kinematic methods  
-###            if ((tau_lepdk!=0) and (COS(pl,leptau) < 0)):
-###                continue
-###            else:
-###                jetcount=jetcount+1
-#!               COSleptau = COS(pl,leptau)
-
-#               print COSleptau
-#!               hleptaud.fill(COSleptau)
-#!            hjetpT.fill(pl.perp())
-            #1#print JETset[hard].getName() , "center"
-         #print type(fcent(JETset, pl)), type(pl.calcMass())
-#!            hnjettracks.fill(njettracks)
-#!            hnjettracks_uncut.fill(njettracks_uncut)
-#!            FCENT = fcent(JETset, pl)
-#!            FTRACK = ftrack(JETset, pl)
-#!            RTRACK = Rtrack(JETset, pl)
-#!            NISO = Niso_track(JETset, pl)
-#!            MAXDELR = max_delR(JETset, pl)
-#!            MTRACK = mtrack(JETset, pl)
-##         print FCENT, "\t", FTRACK
-#         if (FCENT == -100):
-#            print "pjet ", pjet
-
-#!            if (FCENT != "NAN"):
-#!               hfcent.fill(FCENT)
-#!            if (FTRACK != "NAN"):
-#!               hftrack.fill(FTRACK)
-#!            if (RTRACK != "NAN"):
-#!               hRtrack.fill(RTRACK)
-#!            hNiso_track.fill(NISO)
-#!            hMaxDeltaR.fill(MAXDELR)
-#!            hMtrack.fill(MTRACK)
-#            if ((RTRACK != 'NAN') and (FTRACK == 'NAN')):
-#               print "*****************"
-#               for i in JETset:
-#                  if (track_check(i)):
-#                     print "defaulter: ",(delR(i, pl)), i.perp(), RTRACK 
-#!     neventtracks=neventtracks+njettracks
-#!     neventtracks_uncut=neventtracks_uncut+njettracks_uncut
-#!     hneventtracks.fill(neventtracks)
-#!     hneventtracks_uncut.fill(neventtracks_uncut)
-#     iter1 = iter1+1
-#     print "event-", iter1, " ends"
-#     nEvent=nEvent+1
+            FCENT = fcent(JETset, pl)
+            FTRACK = ftrack(JETset, pl)
+            RTRACK = Rtrack(JETset, pl)
+            NISO = Niso_track(JETset, pl)
+            MAXDELR = max_delR(JETset, pl)
+            MTRACK = mtrack(JETset, pl)
+            if (FCENT != "NAN"):
+               hfcent.fill(FCENT)
+            if (FTRACK != "NAN"):
+               hftrack.fill(FTRACK)
+            if (RTRACK != "NAN"):
+               hRtrack.fill(RTRACK)
+            hNiso_track.fill(NISO)
+            hMaxDeltaR.fill(MAXDELR)
+            hMtrack.fill(MTRACK)
 #==============================================================================
-reader.close();
-print tau1p, "1p<                  >3p", tau3p, "----------------", jetcount, "-----------", realjetcount, "-----------", taucount
+reader.close()
+print mctau1p, "1p <       mc     > 3p ", mctau3p
+print tau1p, "1p<       pandora      >3p", tau3p, "----pandora jetcount", jetcount, "----mc jetcount", realjetcount, "---mc taucount", taucount
 print "events:%i event_rej:%i one_lep:%i iter:%i"%(nEvent, event_rej, one_lep, iter1)
-exit()
+#exit()
 from java.awt import Color
 c1=HPlot("Canvas", 1000, 1200, 2, 3)
 # c1.doc() # look at API
