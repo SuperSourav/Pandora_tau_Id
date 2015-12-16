@@ -75,19 +75,19 @@ def prong(V):
 # jet V being an list of its members in LParticle format 
 #and jet being the combined jet particle in LParticle format
 def fcent(V, jet): #Central energy fraction
-   E_deno = 0
+   Et_deno = 0
    Et_num = 0        
    global core
    for i in range(len(V)):
       if (delR(V[i], jet) < core):
-         E_deno = E_deno + V[i].e()
+         Et_deno = Et_deno + Et(V[i])
          if ((delR(V[i], jet) < (core*0.5))):
             Et_num = Et_num + Et(V[i])
             #1#else: print V[i].getName()
-   if (E_deno == 0):
+   if (Et_deno == 0):
       c = "NAN"
    else:
-      c = (Et_num*1./E_deno)
+      c = (Et_num*1./Et_deno)
    return c
 #------------------------------------------------------------------------------
 
@@ -194,8 +194,8 @@ def PTCUT(jet):
 #------------------------------------------------------------------------------
 #====================================================================================#
 ##h1=H1D("M(jj)",30,30,120)
-hfcent=H1D("fcent",30,0,1.0)
-hfcentT=H1D("fcent_truth",30,0,1.0)
+hfcent=H1D("fcent",30,0,1.01)
+hfcentT=H1D("fcent_truth",30,0,1.01)
 hftrack=H1D("ftrack",50,0,1.0)
 hftrackT=H1D("ftrack_truth",50,0,1.0)
 hRtrack=H1D("Rtrack",50,0,0.4)
@@ -215,7 +215,7 @@ hleptaud=H1D("cosine angle of recon. jet from had dking tau direction", 50, -1, 
 from hep.physics.jet import DurhamJetFinder,FixNumberOfJetsFinder
 fjet=FixNumberOfJetsFinder(2) # request 2 jets. The Jade algorithm at work 
 #fjet=DurhamJetFinder(0.05) 
-core=0.2 #(size of the core of a jet)
+core=0.1 #(size of the core of a jet)
 pl = 0
 nEvent=0
 TRACK_PT_CUT = 15.0 #hardest track in a jet candidate should be more than 15 GeV to be considered
@@ -237,7 +237,6 @@ tau1p = 0
 while(1):
      evt=reader.readNextEvent()
      if (evt == None): break
-#     print nEvent ,"ends"
      nEvent=nEvent+1
 #     if (nEvent==2): break #print 
      strVec = evt.getCollectionNames()
@@ -396,7 +395,7 @@ while(1):
             hMaxDeltaR.fill(MAXDELR)
             hMtrack.fill(MTRACK)
 #==============================================================================
-reader.close()
+reader.close();
 print mctau1p, "1p <       mc     > 3p ", mctau3p
 print tau1p, "1p<       pandora      >3p", tau3p, "----pandora jetcount", jetcount, "----mc jetcount", realjetcount, "---mc taucount", taucount
 print "events:%i event_rej:%i one_lep:%i iter:%i"%(nEvent, event_rej, one_lep, iter1)
@@ -409,11 +408,13 @@ c1.cd(1,1)
 c1.setMarginLeft(100)
 c1.setNameX("fcent")
 c1.setNameY("Events")
-c1.setRangeX(0,1.01)
+c1.setRangeX(0,1.02)
 hfcent.setColor(Color.red)
 hfcent.setTitle("Det_level %i jets"%(hfcent.entries()))
 hfcentT.setColor(Color.green)
 hfcentT.setTitle("Truth level %i jets"%(hfcentT.entries()))
+#c1.setAutoRange()
+#c1.setRangeY(0, 7000)
 c1.draw(hfcent)
 c1.draw(hfcentT)
 
@@ -426,6 +427,8 @@ hftrack.setColor(Color.red)
 hftrack.setTitle("Det_level %i jets"%(hftrack.entries()))
 hftrackT.setColor(Color.green)
 hftrackT.setTitle("Truth level %i jets"%(hftrackT.entries()))
+#c1.setAutoRange()
+#c1.setRangeY(0, 7000)
 c1.draw(hftrack)
 c1.draw(hftrackT)
 
@@ -438,6 +441,8 @@ hRtrack.setColor(Color.red)
 hRtrack.setTitle("Det_level %i jets"%(hRtrack.entries()))
 hRtrackT.setColor(Color.green)
 hRtrackT.setTitle("Truth level %i jets"%(hRtrackT.entries()))
+#c1.setAutoRange()
+#c1.setRangeY(0, 22000)
 c1.draw(hRtrack)
 c1.draw(hRtrackT)
 
@@ -450,6 +455,8 @@ hNiso_track.setColor(Color.red)
 hNiso_track.setTitle("Det_level %i jets"%(hNiso_track.entries()))
 hNiso_trackT.setColor(Color.green)
 hNiso_trackT.setTitle("Truth level %i jets"%(hNiso_trackT.entries()))
+#c1.setAutoRange()
+#c1.setRangeY(0, 27000)
 c1.draw(hNiso_track)
 c1.draw(hNiso_trackT)
 
@@ -462,6 +469,8 @@ hMaxDeltaR.setColor(Color.red)
 hMaxDeltaR.setTitle("Det_level %i jets"%(hMaxDeltaR.entries()))
 hMaxDeltaRT.setColor(Color.green)
 hMaxDeltaRT.setTitle("Truth level %i jets"%(hMaxDeltaRT.entries()))
+#c1.setAutoRange()
+#c1.setRangeY(0, 12000)
 c1.draw(hMaxDeltaR)
 c1.draw(hMaxDeltaRT)
 
@@ -474,6 +483,8 @@ hMtrack.setColor(Color.red)
 hMtrack.setTitle("Det_level %i jets"%(hMtrack.entries()))
 hMtrackT.setColor(Color.green)
 hMtrackT.setTitle("Truth level %i jets"%(hMtrackT.entries()))
+#c1.setAutoRange()
+#c1.setRangeY(0, 27000)
 c1.draw(hMtrack)
 c1.draw(hMtrackT)
 
